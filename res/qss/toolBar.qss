@@ -1,0 +1,16 @@
+#toolBar{
+	min-height:100px;
+	max-height:100px;
+}
+#ToolButtonBox
+{
+	min-width:50px;
+	max-width:50px;
+	background-color: rgb(85, 255, 127);
+}
+#toolButtonBoxName{
+	min-height:20px;
+	max-height:20px;
+	color:#FF0000;
+	background-color: rgb(85, 255, 127);
+}
