@@ -1,67 +1,75 @@
 #include "QMiniZip.h"
-#include "unzip.h"
-#include <winnt.h>
+#include "./zlibMiniZip/unzip.h"
+#include <QFile>
+#include <QDir>
+
 
 QMiniZip::QMiniZip(QObject* parent /*= Q_NULLPTR*/)
+	:QObject(parent)
 {
-	unz_file_info64 FileInfo;
-	unzFile zFile = unzOpen64("d:/biji.zip");
-	if (NULL == zFile)
-		qDebug() << "zero!";
-	else
-		qDebug() << "haha";
 
+}
+
+QStringList QMiniZip::extractFiles(QString zipFileName, QRegExp& regExp, QString outPutPath)
+{
+	unzFile zFile = unzOpen64(zipFileName.toStdString().c_str());
 	unz_global_info64 gi;
-
+	QStringList retFileList;
 	if (unzGetGlobalInfo64(zFile, &gi) != UNZ_OK)
 	{
-		qDebug() << "ho no";
+		return retFileList;
 	}
-
-	int result;
 	for (int i = 0; i < gi.number_entry; ++i)
 	{
-		char file[256] = { 0 };
-		char ext[256] = { 0 };
+		unz_file_info64 FileInfo;
+		char file[256] = "";
+		unzGetCurrentFileInfo64(zFile, &FileInfo, file, sizeof(file), NULL, 0, NULL, 0);
+		if (isDir(file))
+		{
+			unzGoToNextFile(zFile);
+			continue;
+		}
 
-		char com[1024] = { 0 };
-		if (unzGetCurrentFileInfo64(zFile, &FileInfo, file, sizeof(file), ext, 256, com, 1024) != UNZ_OK)
-			qDebug() << "error";
-		qDebug() << file << ":" << ext << ":" << com;
-
-
-
-		if (!(FileInfo.external_fa & FILE_ATTRIBUTE_DIRECTORY)) //文件，否则为目录
-
-		//打开文件
-			result = unzOpenCurrentFile(zFile);/* 无密码 */
-		result = unzOpenCurrentFilePassword(zFile, "szPassword"); /* 有密码 */
+		if (!regExp.exactMatch(file))
+		{
+			unzGoToNextFile(zFile);
+			continue;
+		}
+		unzOpenCurrentFile(zFile);
 
 		char data[1024] = { 0 };
 		int size;
-		//读取内容
-
-		QString path = QString("d:/zip/") + file;
+		QString path;
+		if (isDir(outPutPath))
+		{
+			path = outPutPath + file;
+		}
+		else
+		{
+			path = outPutPath + "/" + file;
+		}
 		QFile f(path);
 		f.open(QFile::WriteOnly);
-		while (true) {
+		while (true)
+		{
 			size = unzReadCurrentFile(zFile, data, sizeof(data));
 			if (size <= 0)
 				break;
-
-			//            QString str;
-			//            str = QString::fromLocal8Bit(data, size);
 			f.write(data, size);
 		}
 		f.close();
-
-		//关闭当前文件
+		retFileList << file;
 		unzCloseCurrentFile(zFile);
-
-		//出错
-		if (i < gi.number_entry - 1 && unzGoToNextFile(zFile) != UNZ_OK)
-			qDebug() << "error2";
+		unzGoToNextFile(zFile);
 	}
 	unzClose(zFile);
+	return retFileList;
+}
+
+bool QMiniZip::isDir(QString fileName)
+{
+	if (fileName.isEmpty())
+		return false;
+	return fileName.back() == '/' || fileName.back() == '\\';
 }
 
