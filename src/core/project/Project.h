@@ -7,6 +7,7 @@ class Project :public QObject
 	Q_OBJECT
 signals:
 	void logOutPut(const QString& strLog);
+	void finished();
 public:
 	enum generator_order_type
 	{
@@ -19,6 +20,7 @@ public:
 	Project(QString strApkName, QObject* parent = Q_NULLPTR);
 	void start();
 	QString projectPath();
+	QString smaliPath();
 private slots:
 	void startReadLog();
 

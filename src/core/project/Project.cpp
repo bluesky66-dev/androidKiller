@@ -21,6 +21,11 @@ QString Project::projectPath()
 	return getWorksSpacePath() + "/" + fi.fileName();
 }
 
+QString Project::smaliPath()
+{
+	return projectPath() + "/smali";
+}
+
 void Project::startReadLog()
 {
 	QProcess* pProcess = dynamic_cast<QProcess*>(sender());
@@ -53,6 +58,7 @@ void Project::progcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 			break;
 		case Project::Generator_Smali_Start:
 			logOutPut(QStringLiteral("反编译apk包成功\n"));
+			finished();
 			break;
 		default:
 			break;
@@ -62,7 +68,6 @@ void Project::progcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 void Project::generator()
 {
 	createProjectPath();
-	generatorJarFile();
 }
 
 void Project::createProjectPath()
@@ -72,9 +77,11 @@ void Project::createProjectPath()
 	QDir pathDir(strProjectPath);
 	if (pathDir.exists())
 	{
+		finished();
 		return;
 	}
 	pathDir.mkpath(strProjectPath);
+	generatorJarFile();
 }
 
 void Project::generatorSmali()

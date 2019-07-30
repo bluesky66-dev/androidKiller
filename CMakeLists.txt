@@ -6,6 +6,12 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LibOutPutDirectory})
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LibOutPutDirectory})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${DllOutPutDirectory})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DllOutPutDirectory})
+
+cmake_policy(SET CMP0015 NEW)
+if(POLICY CMP0020)
+	cmake_policy(SET CMP0020 NEW)
+endif()
+
 function(SUBDIRLIST filter curdir)
 	IF(filter)
 		FILE(GLOB SRC ${curdir}/*.h ${curdir}/*.cpp ${curdir}/*.qml ${curdir}/*.c)
@@ -20,11 +26,12 @@ function(SUBDIRLIST filter curdir)
 	ENDIF()
 	ENDFOREACH()
 endfunction()
-
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd/qscintilla)
 SUBDIRLIST("" ${CMAKE_CURRENT_SOURCE_DIR})
 link_directories(${LibOutPutDirectory})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd)
 set(ProjectName "androidKiller")
 set(OutPutName "androidKiller")
 project (${ProjectName})
@@ -59,6 +66,13 @@ POST_BUILD
 COMMAND  ${BuildCommand}
 )
 
+set(BuildCommand if not exist ${DllOutPutDirectory}/$<$<CONFIG:Debug>:Qt5PrintSupportd.dll>$<$<CONFIG:Release>:Qt5PrintSupport.dll> goto Qt5PrintSupport\ngoto PrintSupportOK\n:Qt5PrintSupport\necho \"cannot find Qt5PrintSupport\"\ngoto DeployPrintSupportCommand\n:DeployPrintSupportCommand\necho \"start deploy\"\ncall ${CMAKE_PREFIX_PATH}/bin/windeployqt.exe ${DllOutPutDirectory}/$<$<CONFIG:Debug>:qscintilla2_qt5d.dll>$<$<CONFIG:Release>:qscintilla2_qt5.dll>
+\n:PrintSupportOK\necho \"deploy success\")
+
+add_custom_command(TARGET ${ProjectName}
+POST_BUILD
+COMMAND  ${BuildCommand}
+)
 find_package(Qt5Widgets)
 qt5_wrap_ui(ui_FILES ${UIRES})
 qt5_add_resources(QRC_FILES ${QRC_SOURCE_FILES})
@@ -70,5 +84,6 @@ add_definitions(-D _UNICODE)
 
 
 
-target_link_libraries(${ProjectName} Qt5::Widgets debug zlibd.lib optimized zlib.lib)
+target_link_libraries(${ProjectName} Qt5::Widgets debug zlibd.lib optimized zlib.lib debug qscintilla2_qt5d.lib optimized qscintilla2_qt5.lib)
 set_target_properties(${ProjectName} PROPERTIES OUTPUT_NAME ${OutPutName})
+

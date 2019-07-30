@@ -6,7 +6,6 @@
 #include <QMimeData>
 #include <QFileInfo>
 #include "ProjectPage.h"
-#include <src/core/project/Project.h>
 
 MainWindow::MainWindow()
 {
@@ -47,12 +46,10 @@ void MainWindow::dropEvent(QDropEvent *event)
 	{
 		QString file_name = url.toLocalFile();
 		QFileInfo fi(file_name);
-		ProjectPage* pProjectPage = new ProjectPage(this);
+		ProjectPage* pProjectPage = new ProjectPage(file_name, this);
 		m_pContentBar->addTab(pProjectPage, fi.fileName());
 		m_pContentBar->setCurrentIndex(m_pContentBar->count() - 1);
-		Project* pProject = new Project(file_name, pProjectPage);
-		connect(pProject, &Project::logOutPut, pProjectPage, &ProjectPage::logOutPut);
-		pProject->start();
+		pProjectPage->start();
 	}
 }
 
